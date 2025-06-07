@@ -5,3 +5,5 @@
 # cd car-ads-api
 
 # php yii migrate/create create_car_table
+
+# php yii migrate/up
