@@ -2,13 +2,9 @@
 
 namespace app\controllers;
 
-use Yii;
-use yii\filters\AccessControl;
-use yii\web\Controller;
+use yii\rest\Controller;
+use yii\filters\ContentNegotiator;
 use yii\web\Response;
-use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
 
 class SiteController extends Controller
 {
@@ -18,111 +14,96 @@ class SiteController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::class,
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
+            'contentNegotiator' => [
+                'class' => ContentNegotiator::class,
+                'formats' => [
+                    'application/json' => Response::FORMAT_JSON,
                 ],
             ],
         ];
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
-        ];
-    }
-
-    /**
-     * Displays homepage.
-     *
-     * @return string
+     * @OA\Get(
+     *     path="/",
+     *     summary="API Information",
+     *     tags={"Info"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="ok"),
+     *             @OA\Property(property="message", type="string", example="Welcome to Car Ads API"),
+     *             @OA\Property(
+     *                 property="endpoints",
+     *                 type="object",
+     *                 @OA\Property(property="POST /car/create", type="string", example="Create new car ad"),
+     *                 @OA\Property(property="GET /car/{id}", type="string", example="Get car ad by ID"),
+     *                 @OA\Property(property="GET /car/list", type="string", example="List all car ads")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        return [
+            'status' => 'ok',
+            'message' => 'Welcome to Car Ads API',
+            'endpoints' => [
+                'POST /car/create' => 'Create new car ad',
+                'GET /car/{id}' => 'Get car ad by ID',
+                'GET /car/list' => 'List all car ads',
+                'GET /' => 'API information (this page)'
+            ]
+        ];
     }
 
     /**
-     * Login action.
-     *
-     * @return Response|string
+     * @OA\Get(
+     *     path="/ping",
+     *     summary="Health check",
+     *     tags={"Health"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Service status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="ok"),
+     *             @OA\Property(property="timestamp", type="string", example="2023-01-01T12:00:00+00:00")
+     *         )
+     *     )
+     * )
      */
-    public function actionLogin()
+    public function actionPing()
     {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        }
-
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
-        ]);
+        return [
+            'status' => 'ok',
+            'timestamp' => date('c')
+        ];
     }
 
     /**
-     * Logout action.
-     *
-     * @return Response
+     * @OA\Get(
+     *     path="/version",
+     *     summary="API Version",
+     *     tags={"Info"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Car Ads API"),
+     *             @OA\Property(property="version", type="string", example="1.0.0"),
+     *             @OA\Property(property="environment", type="string", example="development")
+     *         )
+     *     )
+     * )
      */
-    public function actionLogout()
+    public function actionVersion()
     {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
+        return [
+            'name' => 'Car Ads API',
+            'version' => '1.0.0',
+            'environment' => YII_ENV
+        ];
     }
 }

@@ -7,3 +7,5 @@
 # php yii migrate/create create_car_table
 
 # php yii migrate/up
+
+# php yii sirve
